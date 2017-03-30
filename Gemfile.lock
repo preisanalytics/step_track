@@ -12,7 +12,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  minitest
+  minitest (~> 5.10)
   step-track!
 
 BUNDLED WITH

@@ -19,5 +19,5 @@ Gem::Specification.new do |s|
   s.executables = []
   s.test_files  = Dir["test/**/*"]
 
-  s.add_development_dependency "minitest"
+  s.add_development_dependency "minitest", "~> 5.10"
 end
