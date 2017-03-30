@@ -90,8 +90,9 @@ describe "StepTrack" do
     it "enumerates every step into result" do
       result = StepTrack.done("test")
       expected_key_parts = [:name, :split, :duration, :caller]
-      2.times do |i|
-        expected_keys = expected_key_parts.map { |k| "step_#{i}_#{k}".to_sym }
+
+      ["step", "last"].each_with_index do |n, i|
+        expected_keys = expected_key_parts.map { |k| "step_#{n}_#{k}".to_sym }
         assert_equal expected_keys, expected_keys & result.keys
       end
     end

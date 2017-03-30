@@ -22,7 +22,7 @@ module StepTrack
       split: Time.now - (last_step&.[](:time) || track_ref[:time]),
       duration: Time.now - track_ref[:time],
       time: Time.now,
-      caller: caller[0],
+      caller: caller[0].sub(Dir.pwd + "/", ""),
       name: name
     }.merge(payload)
   end
@@ -36,7 +36,9 @@ module StepTrack
     result = {step_count: steps.count}
     result.merge!(steps.last || {})
     steps.each_with_index do |step, i|
-      result.merge!(step.map { |k, v| ["step_#{i}_#{k}".to_sym, v] }.to_h)
+      name = step[:name]
+      result.merge!(step.merge(i: i + 1).
+        map { |k, v| ["step_#{name}_#{k}".to_sym, v] }.to_h)
     end
     return track_ref[:callback].call(result)
   end
