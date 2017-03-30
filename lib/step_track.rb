@@ -30,15 +30,15 @@ module StepTrack
   def done(track)
     require_init!(track)
     track_ref = Thread.current[ref(track)]
+    Thread.current[ref(track)] = nil
     steps = track_ref.delete(:steps)
     steps.each { |step| step.delete(:time) }
     result = {step_count: steps.count}
     result.merge!(steps.last || {})
     steps.each_with_index do |step, i|
-      result.merge!(step.map { |k, v| ["step_#{i}_#{k}", v] }.to_h)
+      result.merge!(step.map { |k, v| ["step_#{i}_#{k}".to_sym, v] }.to_h)
     end
-    track_ref[:callback].call(result)
-    Thread.current[ref(track)] = nil
+    return track_ref[:callback].call(result)
   end
 
   private
