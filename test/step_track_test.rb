@@ -51,6 +51,24 @@ describe "StepTrack" do
       expected_keys = [:name, :split, :duration, :time, :caller]
       assert_equal expected_keys, expected_keys & step.keys
     end
+
+    it "does nothing when previous step was an error" do
+      StepTrack.push("test", "step", moo: "bar", error: true)
+      data = Thread.current[StepTrack.send(:ref, "test")]
+      assert_equal 1, data[:steps].size
+      StepTrack.push("test", "new")
+      assert_equal 1, data[:steps].size
+    end
+
+    it "merges the new payload into the previous result when requested" do
+      StepTrack.push("test", "step", moo: "bar")
+      StepTrack.push("test", "new", blu: "gnu", merge: true)
+      data = Thread.current[StepTrack.send(:ref, "test")]
+      assert_equal 1, data[:steps].size
+      step = data[:steps].first
+      assert_equal "bar", step[:moo]
+      assert_equal "gnu", step[:blu]
+    end
   end
 
   describe ".done" do
