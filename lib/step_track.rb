@@ -24,8 +24,8 @@ module StepTrack
       split: Time.now.to_f - (last_step&.[](:time) || track_ref[:time]).to_f,
       duration: Time.now.to_f - track_ref[:time].to_f,
       time: Time.now,
-      caller: caller[0].sub(Dir.pwd + "/", ""),
-      name: name
+      caller: merge_step&.[](:caller) || caller[0].sub(Dir.pwd + "/", ""),
+      name: merge_step&.[](:name) || name
     ).merge(payload)
   end
 
