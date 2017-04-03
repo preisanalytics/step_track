@@ -36,7 +36,9 @@ module StepTrack
     steps = track_ref.delete(:steps)
     steps.each { |step| step.delete(:time) }
     result = {step_count: steps.count}
-    result.merge!(steps.last || {})
+    last_step = steps.last&.dup || {}
+    last_step[:final_step_name] = last_step.delete(:step_name)
+    result.merge!(last_step)
     steps.each_with_index do |step, i|
       name = step.delete(:step_name)
       [:split, :duration].each { |k| step[k] = (step[k] * 1000).to_i }
