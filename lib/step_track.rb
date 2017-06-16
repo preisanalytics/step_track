@@ -40,7 +40,13 @@ module StepTrack
     last_step[:final_step_name] = last_step.delete(:step_name)
     result.merge!(last_step)
     steps.each_with_index do |step, i|
-      name = step.delete(:step_name)
+      name = name_dupe = step.delete(:step_name)
+      j = 0
+      while result.key?("step_#{name_dupe}_i".to_sym)
+        j += 1
+        name_dupe = "#{name}_#{j}"
+      end
+      name = name_dupe
       [:split, :duration].each { |k| step[k] = (step[k] * 1000).to_i }
       result.merge!(step.merge(i: i + 1).
         map { |k, v| ["step_#{name}_#{k}".to_sym, v] }.to_h)

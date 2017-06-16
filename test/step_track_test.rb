@@ -46,9 +46,9 @@ describe "StepTrack" do
       data = Thread.current[StepTrack.send(:ref, "test")]
       step = data[:steps].first
       assert_equal 1, data[:steps].size
-      assert_equal "step", step[:name]
+      assert_equal "step", step[:step_name]
       assert_equal "bar", step[:moo]
-      expected_keys = [:name, :split, :duration, :time, :caller]
+      expected_keys = [:split, :duration, :time, :caller]
       assert_equal expected_keys, expected_keys & step.keys
     end
 
@@ -100,16 +100,27 @@ describe "StepTrack" do
 
     it "merges the last step into result" do
       result = StepTrack.done("test")
-      assert_equal "last", result[:name]
-      expected_keys = [:name, :split, :duration, :caller]
+      assert_equal "last", result[:final_step_name]
+      expected_keys = [:split, :duration, :caller]
       assert_equal expected_keys, expected_keys & result.keys
     end
 
     it "enumerates every step into result" do
       result = StepTrack.done("test")
-      expected_key_parts = [:name, :split, :duration, :caller]
+      expected_key_parts = [:split, :duration, :caller]
 
       ["step", "last"].each_with_index do |n, i|
+        expected_keys = expected_key_parts.map { |k| "step_#{n}_#{k}".to_sym }
+        assert_equal expected_keys, expected_keys & result.keys
+      end
+    end
+
+    it "enumerate duplicated step names with index in the result" do
+      StepTrack.push("test", "last", gnu: "blu")
+      result = StepTrack.done("test")
+      expected_key_parts = [:split, :duration, :caller]
+
+      ["step", "last", "last_1"].each_with_index do |n, i|
         expected_keys = expected_key_parts.map { |k| "step_#{n}_#{k}".to_sym }
         assert_equal expected_keys, expected_keys & result.keys
       end
