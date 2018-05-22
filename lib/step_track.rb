@@ -18,7 +18,6 @@ module StepTrack
   def push(track, name, payload={})
     require_init!(track)
     track_ref = Thread.current[ref(track)]
-    return if track_ref[:steps].last&.[](track_ref[:error_key])
     merge_step = track_ref[:steps].pop if payload.delete(track_ref[:merge_key])
     last_step = track_ref[:steps].last
     track_ref[:steps] << (merge_step || {}).merge(
