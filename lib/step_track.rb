@@ -4,14 +4,15 @@ module StepTrack
   extend self
 
   REF = "step_track/%{track}"
+  DEFAULT_CONFIG = {merge_key: :merge, error_key: :error}.freeze
 
-  def init(track, config={merge_key: :merge, error_key: :error})
+  def init(track, config={})
     raise ArgumentError, "callback block required" unless block_given?
     Thread.current[ref(track)] = {
       steps: [],
       callback: Proc.new,
       time: Time.now
-    }.merge(config)
+    }.merge(DEFAULT_CONFIG).merge(config)
   end
 
   def push(track, name, payload={})
@@ -36,7 +37,11 @@ module StepTrack
     steps = track_ref.delete(:steps)
     steps.each { |step| step.delete(:time) }
     result = {step_count: steps.count}
-    last_step = steps.last&.dup || {}
+    if err = steps.detect { |s| s.key?(track_ref[:error_key]) }
+      last_step = err.dup
+    else
+      last_step = steps.last&.dup || {}
+    end
     last_step[:final_step_name] = last_step.delete(:step_name)
     result.merge!(last_step)
     steps.each_with_index do |step, i|

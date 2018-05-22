@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    step-track (0.3.3)
+    step-track (0.4.1)
 
 GEM
   remote: https://rubygems.org/
@@ -16,4 +16,4 @@ DEPENDENCIES
   step-track!
 
 BUNDLED WITH
-   1.13.7
+   1.16.1
