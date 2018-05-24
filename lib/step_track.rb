@@ -51,7 +51,6 @@ module StepTrack
         name_dupe = "#{name}_#{j}"
       end
       name = name_dupe
-      [:split, :duration].each { |k| step[k] = (step[k] * 1000).to_i }
       result.merge!(step.merge(i: i + 1).
         map { |k, v| ["step_#{name}_#{k}".to_sym, v] }.to_h)
     end
