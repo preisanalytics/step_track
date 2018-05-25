@@ -57,6 +57,25 @@ module StepTrack
     return track_ref[:callback].call(result)
   end
 
+  def partition_into(payload, name)
+    payload, other = payload.partition do |k, _v|
+      k.to_s !~ /^step_#{name}_/
+    end.map(&:to_h)
+    prev_pattern = /^step_#{name}_([^\d].*)$/
+    other = other.reduce([{}]) do |acc, (k, v)|
+      match = k.to_s.match(prev_pattern)
+      unless match
+        acc << {}
+        digit = k.to_s.match(/^step_#{name}_(\d+)/).captures.first
+        prev_pattern = /^step_#{name}_#{digit}_(.*)$/
+        match = k.to_s.match(prev_pattern)
+      end
+      acc.last[match.captures.first.to_sym] = v
+      next acc
+    end.reject(&:empty?)
+    return payload, other
+  end
+
   private
 
   def ref(track)
