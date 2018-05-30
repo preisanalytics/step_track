@@ -23,7 +23,6 @@ module StepTrack
     last_step = track_ref[:steps].last
     track_ref[:steps] << (merge_step || {}).merge(
       split: Time.now.to_f - (last_step&.[](:time) || track_ref[:time]).to_f,
-      duration: Time.now.to_f - track_ref[:time].to_f,
       time: Time.now,
       caller: merge_step&.[](:caller) || shorten_caller(caller),
       step_name: merge_step&.[](:step_name) || name
@@ -85,7 +84,7 @@ module StepTrack
   end
 
   def find_caller(caller)
-    caller[0]
+    caller[1]
   end
 
   def shorten_caller(caller)

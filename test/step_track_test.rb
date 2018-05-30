@@ -48,7 +48,7 @@ describe "StepTrack" do
       assert_equal 1, data[:steps].size
       assert_equal "step", step[:step_name]
       assert_equal "bar", step[:moo]
-      expected_keys = [:split, :duration, :time, :caller]
+      expected_keys = [:split, :time, :caller]
       assert_equal expected_keys, expected_keys & step.keys
     end
 
@@ -104,7 +104,7 @@ describe "StepTrack" do
 
     it "sets a caller" do
       result = StepTrack.done("test")
-      assert_equal "test/step_track_test.rb:68:in `block (3 levels) in <top (required)>'", result[:caller]
+      assert_match %r{gems/minitest-.+/lib/minitest/spec.rb:\d+:in `instance_eval'}, result[:caller]
     end
 
     it "does not merge final step into results" do
@@ -121,7 +121,7 @@ describe "StepTrack" do
 
     it "enumerates every step into result" do
       result = StepTrack.done("test")
-      expected_key_parts = [:split, :duration, :caller]
+      expected_key_parts = [:i, :split, :caller]
 
       ["step", "last"].each_with_index do |n, i|
         expected_keys = expected_key_parts.map { |k| "step_#{n}_#{k}".to_sym }
@@ -132,7 +132,7 @@ describe "StepTrack" do
     it "enumerate duplicated step names with index in the result" do
       StepTrack.push("test", "last", gnu: "blu")
       result = StepTrack.done("test")
-      expected_key_parts = [:split, :duration, :caller]
+      expected_key_parts = [:i, :split, :caller]
 
       ["step", "last", "last_1"].each_with_index do |n, i|
         expected_keys = expected_key_parts.map { |k| "step_#{n}_#{k}".to_sym }
