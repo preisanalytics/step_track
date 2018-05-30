@@ -11,7 +11,8 @@ module StepTrack
     Thread.current[ref(track)] = {
       steps: [],
       callback: Proc.new,
-      time: Time.now
+      time: Time.now,
+      caller: shorten_caller(caller)
     }.merge(DEFAULT_CONFIG).merge(config)
   end
 
@@ -24,7 +25,7 @@ module StepTrack
       split: Time.now.to_f - (last_step&.[](:time) || track_ref[:time]).to_f,
       duration: Time.now.to_f - track_ref[:time].to_f,
       time: Time.now,
-      caller: merge_step&.[](:caller) || caller[0].sub(Dir.pwd + "/", ""),
+      caller: merge_step&.[](:caller) || shorten_caller(caller),
       step_name: merge_step&.[](:step_name) || name
     ).merge(payload)
   end
@@ -35,25 +36,18 @@ module StepTrack
     Thread.current[ref(track)] = nil
     steps = track_ref.delete(:steps)
     steps.each { |step| step.delete(:time) }
-    result = {step_count: steps.count}
+    result = {
+      step_count: steps.count,
+      caller: track_ref[:caller],
+      duration: Time.now.to_f - track_ref[:time].to_f
+    }
     if err = steps.detect { |s| s.key?(track_ref[:error_key]) }
       last_step = err.dup
     else
       last_step = steps.last&.dup || {}
     end
-    last_step[:final_step_name] = last_step.delete(:step_name)
-    result.merge!(last_step)
-    steps.each_with_index do |step, i|
-      name = name_dupe = step.delete(:step_name)
-      j = 0
-      while result.key?("step_#{name_dupe}_i".to_sym)
-        j += 1
-        name_dupe = "#{name}_#{j}"
-      end
-      name = name_dupe
-      result.merge!(step.merge(i: i + 1).
-        map { |k, v| ["step_#{name}_#{k}".to_sym, v] }.to_h)
-    end
+    result[:final_step_name] = last_step.delete(:step_name)
+    merge_down_steps(steps, result)
     return track_ref[:callback].call(result)
   end
 
@@ -88,5 +82,33 @@ module StepTrack
 
   def require_init!(track)
     raise ArgumentError, "track not initialized" unless initialized?(track)
+  end
+
+  def find_caller(caller)
+    caller[0]
+  end
+
+  def shorten_caller(caller)
+    caller = find_caller(caller)
+    return nil if caller.nil?
+    roots = [Dir.pwd]
+    roots += Gem.path if defined?(Gem)
+    roots << Bundler.user_bundle_path.join(Bundler.ruby_scope).to_s if defined?(Bundler)
+    roots << Rails.root.to_s if defined?(Rails) && Rails.respond_to?(:root)
+    return caller.sub(%r{^#{Regexp.union(roots)}/}, "")
+  end
+
+  def merge_down_steps(steps, result)
+    steps.each_with_index do |step, i|
+      name = name_dupe = step.delete(:step_name)
+      j = 0
+      while result.key?("step_#{name_dupe}_i".to_sym)
+        j += 1
+        name_dupe = "#{name}_#{j}"
+      end
+      name = name_dupe
+      result.merge!(step.merge(i: i + 1).
+        map { |k, v| ["step_#{name}_#{k}".to_sym, v] }.to_h)
+    end
   end
 end

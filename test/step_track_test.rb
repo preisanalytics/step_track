@@ -90,11 +90,26 @@ describe "StepTrack" do
       assert_equal 2, result[:step_count]
     end
 
-    it "merges the last step into result" do
+    it "sets the final step name" do
       result = StepTrack.done("test")
       assert_equal "last", result[:final_step_name]
-      expected_keys = [:split, :duration, :caller]
-      assert_equal expected_keys, expected_keys & result.keys
+    end
+
+    it "sets a duration" do
+      result = StepTrack.done("test")
+      assert result[:duration].is_a?(Float), "duration is no Float"
+      assert result[:duration] > 0.0, "duration is not positive"
+      assert result[:duration] < 1.0, "duration is too long"
+    end
+
+    it "sets a caller" do
+      result = StepTrack.done("test")
+      assert_equal "test/step_track_test.rb:68:in `block (3 levels) in <top (required)>'", result[:caller]
+    end
+
+    it "does not merge final step into results" do
+      result = StepTrack.done("test")
+      assert !result.key?(:gnu), "merged gnu into result"
     end
 
     it "merges the error into result when available" do
