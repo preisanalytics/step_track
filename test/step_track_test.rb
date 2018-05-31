@@ -15,7 +15,7 @@ describe "StepTrack" do
     end
 
     it "stores the initialized data into thread context" do
-      StepTrack.init("test") { }
+      StepTrack.init("test", track_id: "1234") { }
       data = Thread.current[StepTrack.send(:ref, "test")]
       assert_equal [], data[:steps],
         "steps is no empty array #{data[:steps].inspect}"
@@ -23,6 +23,8 @@ describe "StepTrack" do
         "callback is no proc #{data[:callback].inspect}"
       assert data[:time] <= Time.now,
         "time #{data[:time].inspect} > #{Time.now.inspect}"
+      assert_match %r{minitest}, data[:caller]
+      assert_equal "1234", data[:track_id]
     end
   end
 
@@ -65,7 +67,7 @@ describe "StepTrack" do
 
   describe ".done" do
     before do
-      StepTrack.init("test") { |result| result }
+      StepTrack.init("test", track_id: "1234") { |result| result }
       StepTrack.push("test", "step", moo: "bar")
       StepTrack.push("test", "last", gnu: "blu")
     end
@@ -83,6 +85,11 @@ describe "StepTrack" do
     it "returns the callback result" do
       result = StepTrack.done("test")
       assert result.is_a?(Hash), "result is no hash #{result.inspect}"
+    end
+
+    it "sets a track ID" do
+      result = StepTrack.done("test")
+      assert_equal "1234", result[:track_id]
     end
 
     it "sets a step count" do
@@ -138,6 +145,24 @@ describe "StepTrack" do
         expected_keys = expected_key_parts.map { |k| "step_#{n}_#{k}".to_sym }
         assert_equal expected_keys, expected_keys & result.keys
       end
+    end
+  end
+
+  describe ".track_id" do
+    it "raises when not initialized" do
+      assert_raises ArgumentError do
+        StepTrack.track_id("test")
+      end
+    end
+
+    it "gives nil track_id when initialized without track_id" do
+      StepTrack.init("test") { }
+      assert_nil StepTrack.track_id("test")
+    end
+
+    it "gives configured track_id when initialized with track_id" do
+      StepTrack.init("test", track_id: "1234") { }
+      assert_equal "1234", StepTrack.track_id("test")
     end
   end
 end

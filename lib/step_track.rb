@@ -9,6 +9,7 @@ module StepTrack
   def init(track, config={})
     raise ArgumentError, "callback block required" unless block_given?
     Thread.current[ref(track)] = {
+      track_id: config[:track_id],
       steps: [],
       callback: Proc.new,
       time: Time.now,
@@ -40,6 +41,7 @@ module StepTrack
       caller: track_ref[:caller],
       duration: Time.now.to_f - track_ref[:time].to_f
     }
+    result[:track_id] = track_ref[:track_id] if track_ref.key?(:track_id)
     if err = steps.detect { |s| s.key?(track_ref[:error_key]) }
       last_step = err.dup
     else
@@ -48,6 +50,15 @@ module StepTrack
     result[:final_step_name] = last_step.delete(:step_name)
     merge_down_steps(steps, result)
     return track_ref[:callback].call(result)
+  end
+
+  # Returns the track_id given to init in the config.
+  # Params:
+  # +track+:: name of the track to get the track_id of
+  def track_id(track)
+    require_init!(track)
+    track_ref = Thread.current[ref(track)]
+    return track_ref[:track_id]
   end
 
   def partition_into(payload, name)
@@ -80,7 +91,7 @@ module StepTrack
   end
 
   def require_init!(track)
-    raise ArgumentError, "track not initialized" unless initialized?(track)
+    raise ArgumentError, "track #{track.inspect} not initialized" unless initialized?(track)
   end
 
   def find_caller(caller)
