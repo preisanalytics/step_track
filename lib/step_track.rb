@@ -95,7 +95,7 @@ module StepTrack
   end
 
   def find_caller(caller)
-    caller[1]
+    caller[0]
   end
 
   def shorten_caller(caller)
