@@ -23,7 +23,7 @@ describe "StepTrack" do
         "callback is no proc #{data[:callback].inspect}"
       assert data[:time] <= Time.now,
         "time #{data[:time].inspect} > #{Time.now.inspect}"
-      assert_match %r{minitest}, data[:caller]
+      assert_match %r{#{Regexp.escape(__FILE__)}}, data[:caller]
       assert_equal "1234", data[:track_id]
     end
   end
@@ -111,7 +111,7 @@ describe "StepTrack" do
 
     it "sets a caller" do
       result = StepTrack.done("test")
-      assert_match %r{gems/minitest-.+/lib/minitest/spec.rb:\d+:in `instance_eval'}, result[:caller]
+      assert_match %r{#{Regexp.escape(__FILE__)}}, result[:caller]
     end
 
     it "does not merge final step into results" do
