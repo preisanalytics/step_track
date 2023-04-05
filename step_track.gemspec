@@ -21,9 +21,4 @@ Gem::Specification.new do |s|
 
   s.files       = Dir["lib/**/*.rb", "LICENSE"]
   s.executables = []
-
-  s.add_development_dependency "geminabox"
-  s.add_development_dependency "minitest", "~> 5.10"
-  s.add_development_dependency "rubocop", "~> 1.0"
-  s.add_development_dependency "rubocop-minitest", "~> 0.29"
 end

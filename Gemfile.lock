@@ -63,7 +63,7 @@ PLATFORMS
   x86_64-darwin-22
 
 DEPENDENCIES
-  geminabox
+  geminabox (~> 2.1)
   minitest (~> 5.10)
   rubocop (~> 1.0)
   rubocop-minitest (~> 0.29)
