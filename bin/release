@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+if [[ -z "$ACCOUNT_API_KEY" ]]; then
+  echo "Environment variable ACCOUNT_API_KEY needs to be set. Aborting!"
+  exit 1
+fi
+
+bundle install
+
+if [[ -n $(git status -s) ]]; then
+  echo "Git status is not clean:"
+  echo
+  git status -s
+  echo
+  echo "Aborting!"
+  exit 1
+fi
+
+version=$(ruby -r./lib/priceapi/scheduler/version -e 'print PriceAPI::Scheduler::VERSION')
+echo "Version: $version"
+
+if ! bundle exec rubocop; then
+  echo
+  echo "Rubocop detected offenses. Aborting!"
+  exit 1
+fi
+
+if ! bundle exec ruby test/runner.rb; then
+  echo
+  echo "Rspec failed. Aborting!"
+  exit 1
+fi
+
+gem build step_track.gemspec -o step_track.gem
+gem inabox step_track.gem --host "https://api_key:$ACCOUNT_API_KEY@gemserver.metoda.com"
+rm step_track.gem
+
+git tag "v$version"
+git push --tags

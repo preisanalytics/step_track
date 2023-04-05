@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "step_track"
 require "minitest/spec"
 require "minitest/autorun"

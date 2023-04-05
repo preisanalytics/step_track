@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe "StepTrack" do
   after do
     Thread.current[StepTrack.send(:ref, "test")] = nil
@@ -11,26 +13,36 @@ describe "StepTrack" do
       rescue ArgumentError
         rescued = true
       end
+
       assert rescued
     end
 
     it "stores the initialized data into thread context" do
-      StepTrack.init("test", track_id: "1234") { }
+      StepTrack.init("test") {}
       data = Thread.current[StepTrack.send(:ref, "test")]
-      assert_equal [], data[:steps],
-        "steps is no empty array #{data[:steps].inspect}"
+
+      assert_empty data[:steps],
+                   "steps is no empty array #{data[:steps].inspect}"
       assert data[:callback].is_a?(Proc),
-        "callback is no proc #{data[:callback].inspect}"
-      assert data[:time] <= Time.now,
-        "time #{data[:time].inspect} > #{Time.now.inspect}"
-      assert_match %r{#{Regexp.escape(__FILE__)}}, data[:caller]
-      assert_equal "1234", data[:track_id]
+             "callback is no proc #{data[:callback].inspect}"
+      assert data[:time] <= DateTime.now,
+             "time #{data[:time].inspect} > #{DateTime.now.inspect}"
+      assert_equal data[:track_id], Thread.current.object_id.to_s,
+                   "track id is #{StepTrack.track_id("test")}"
+      refute_empty data[:caller], "caller is empty"
+    end
+
+    it "stores a track_id when given" do
+      StepTrack.init("test", track_id: "moobar") {}
+
+      assert_equal "moobar", StepTrack.track_id("test"),
+                   "track id is #{StepTrack.track_id("test")}"
     end
   end
 
   describe ".push" do
     before do
-      StepTrack.init("test") { }
+      StepTrack.init("test") {}
     end
 
     it "requires initialization" do
@@ -40,6 +52,7 @@ describe "StepTrack" do
       rescue ArgumentError
         rescued = true
       end
+
       assert rescued
     end
 
@@ -47,10 +60,12 @@ describe "StepTrack" do
       StepTrack.push("test", "step", moo: "bar")
       data = Thread.current[StepTrack.send(:ref, "test")]
       step = data[:steps].first
+
       assert_equal 1, data[:steps].size
       assert_equal "step", step[:step_name]
       assert_equal "bar", step[:moo]
-      expected_keys = [:split, :time, :caller]
+      expected_keys = %i[split duration time caller]
+
       assert_equal expected_keys, expected_keys & step.keys
     end
 
@@ -58,8 +73,10 @@ describe "StepTrack" do
       StepTrack.push("test", "step", moo: "bar")
       StepTrack.push("test", "new", blu: "gnu", merge: true)
       data = Thread.current[StepTrack.send(:ref, "test")]
+
       assert_equal 1, data[:steps].size
       step = data[:steps].first
+
       assert_equal "bar", step[:moo]
       assert_equal "gnu", step[:blu]
     end
@@ -67,7 +84,7 @@ describe "StepTrack" do
 
   describe ".done" do
     before do
-      StepTrack.init("test", track_id: "1234") { |result| result }
+      StepTrack.init("test") { |result| result }
       StepTrack.push("test", "step", moo: "bar")
       StepTrack.push("test", "last", gnu: "blu")
     end
@@ -79,31 +96,31 @@ describe "StepTrack" do
       rescue ArgumentError
         rescued = true
       end
+
       assert rescued
     end
 
     it "returns the callback result" do
       result = StepTrack.done("test")
-      assert result.is_a?(Hash), "result is no hash #{result.inspect}"
-    end
 
-    it "sets a track ID" do
-      result = StepTrack.done("test")
-      assert_equal "1234", result[:track_id]
+      assert result.is_a?(Hash), "result is no hash #{result.inspect}"
     end
 
     it "sets a step count" do
       result = StepTrack.done("test")
+
       assert_equal 2, result[:step_count]
     end
 
     it "sets the final step name" do
       result = StepTrack.done("test")
+
       assert_equal "last", result[:final_step_name]
     end
 
     it "sets a duration" do
       result = StepTrack.done("test")
+
       assert result[:duration].is_a?(Float), "duration is no Float"
       assert result[:duration] > 0.0, "duration is not positive"
       assert result[:duration] < 1.0, "duration is too long"
@@ -111,27 +128,37 @@ describe "StepTrack" do
 
     it "sets a caller" do
       result = StepTrack.done("test")
-      assert_match %r{#{Regexp.escape(__FILE__)}}, result[:caller]
+
+      assert_match(/#{Regexp.escape(__FILE__)}/, result[:caller])
+    end
+
+    it "sets a timestamp" do
+      result = StepTrack.done("test")
+
+      assert_match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}/, result[:timestamp])
     end
 
     it "does not merge final step into results" do
       result = StepTrack.done("test")
-      assert !result.key?(:gnu), "merged gnu into result"
+
+      refute result.key?(:gnu), "merged gnu into result"
     end
 
     it "merges the error into result when available" do
       StepTrack.push("test", "err", moo: "bar", error: true)
       StepTrack.push("test", "new")
       result = StepTrack.done("test")
+
       assert_equal "err", result[:final_step_name]
     end
 
     it "enumerates every step into result" do
       result = StepTrack.done("test")
-      expected_key_parts = [:i, :split, :caller]
+      expected_key_parts = %i[i split duration timestamp caller]
 
-      ["step", "last"].each_with_index do |n, i|
+      %w[step last].each_with_index do |n, _i|
         expected_keys = expected_key_parts.map { |k| "step_#{n}_#{k}".to_sym }
+
         assert_equal expected_keys, expected_keys & result.keys
       end
     end
@@ -139,10 +166,11 @@ describe "StepTrack" do
     it "enumerate duplicated step names with index in the result" do
       StepTrack.push("test", "last", gnu: "blu")
       result = StepTrack.done("test")
-      expected_key_parts = [:i, :split, :caller]
+      expected_key_parts = %i[i split duration caller]
 
-      ["step", "last", "last_1"].each_with_index do |n, i|
+      %w[step last last_1].each_with_index do |n, _i|
         expected_keys = expected_key_parts.map { |k| "step_#{n}_#{k}".to_sym }
+
         assert_equal expected_keys, expected_keys & result.keys
       end
     end
@@ -156,12 +184,14 @@ describe "StepTrack" do
     end
 
     it "gives nil track_id when initialized without track_id" do
-      StepTrack.init("test") { }
-      assert_nil StepTrack.track_id("test")
+      StepTrack.init("test") {}
+
+      assert_equal Thread.current.object_id.to_s, StepTrack.track_id("test")
     end
 
     it "gives configured track_id when initialized with track_id" do
-      StepTrack.init("test", track_id: "1234") { }
+      StepTrack.init("test", track_id: "1234") {}
+
       assert_equal "1234", StepTrack.track_id("test")
     end
   end

@@ -1,0 +1,37 @@
+require:
+  - "rubocop-minitest"
+
+AllCops:
+  NewCops: enable
+
+Gemspec/RequireMFA:
+  Enabled: false
+
+Layout/FirstArrayElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/LineLength:
+  Max: 120
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Metrics:
+  Enabled: false
+
+Style/Documentation:
+  Exclude:
+    - "lib/priceapi/scheduler/**/*.rb"
+    - "spec/**/*.rb"
+
+Style/ModuleFunction:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes

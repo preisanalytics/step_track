@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-$LOAD_PATH.push File.expand_path("../lib", __FILE__)
+
+$LOAD_PATH.push File.expand_path("lib", __dir__)
 
 # Maintain your gem's version:
 require "step_track/version"
@@ -15,9 +16,13 @@ Gem::Specification.new do |s|
   s.homepage    = "https://github.com/matthias-geier/track_step"
   s.license     = "BSD-2-Clause"
 
+  s.required_ruby_version = Gem::Requirement.new(">= 2.6.1")
+  s.metadata["allowed_push_host"] = "https://gemserver.metoda.com"
+
   s.files       = Dir["lib/**/*.rb", "LICENSE"]
   s.executables = []
-  s.test_files  = Dir["test/**/*"]
 
   s.add_development_dependency "minitest", "~> 5.10"
+  s.add_development_dependency "rubocop", "~> 1.0"
+  s.add_development_dependency "rubocop-minitest", "~> 0.29"
 end
