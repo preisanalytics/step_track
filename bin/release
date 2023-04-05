@@ -16,7 +16,7 @@ if [[ -n $(git status -s) ]]; then
   exit 1
 fi
 
-version=$(ruby -r./lib/priceapi/scheduler/version -e 'print PriceAPI::Scheduler::VERSION')
+version=$(ruby -r./lib/step_track/version -e 'print StepTrack::VERSION')
 echo "Version: $version"
 
 if ! bundle exec rubocop; then
