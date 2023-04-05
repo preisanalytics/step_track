@@ -18,7 +18,7 @@ describe "StepTrack" do
     end
 
     it "stores the initialized data into thread context" do
-      StepTrack.init("test") {}
+      StepTrack.init("test") {} # Empty block is intentional
       data = Thread.current[StepTrack.send(:ref, "test")]
 
       assert_empty data[:steps],
@@ -33,7 +33,7 @@ describe "StepTrack" do
     end
 
     it "stores a track_id when given" do
-      StepTrack.init("test", track_id: "moobar") {}
+      StepTrack.init("test", track_id: "moobar") {} # Empty block is intentional1
 
       assert_equal "moobar", StepTrack.track_id("test"),
                    "track id is #{StepTrack.track_id("test")}"
@@ -42,7 +42,7 @@ describe "StepTrack" do
 
   describe ".push" do
     before do
-      StepTrack.init("test") {}
+      StepTrack.init("test") {} # Empty block is intentional
     end
 
     it "requires initialization" do
@@ -184,13 +184,13 @@ describe "StepTrack" do
     end
 
     it "gives nil track_id when initialized without track_id" do
-      StepTrack.init("test") {}
+      StepTrack.init("test") {} # Empty block is intentional
 
       assert_equal Thread.current.object_id.to_s, StepTrack.track_id("test")
     end
 
     it "gives configured track_id when initialized with track_id" do
-      StepTrack.init("test", track_id: "1234") {}
+      StepTrack.init("test", track_id: "1234") {} # Empty block is intentional
 
       assert_equal "1234", StepTrack.track_id("test")
     end
